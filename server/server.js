@@ -4,7 +4,7 @@ import cors from "cors"
 import { v4 as uuidv4 } from 'uuid'
 
 import admin from "firebase-admin"
-// import credentials from './key/key.json';
+// import credentials from './key/key.json'
 
 const credentials = {
     "type": "service_account",
