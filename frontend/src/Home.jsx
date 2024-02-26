@@ -11,13 +11,16 @@ function formatDate(dateString) {
   return `${day}/${month}/${year}`;
 }
 
-// const handleDelete = (id) => {
-//   axios.delete('http://localhost:8081/delete/'+id)
-//   .then(res => {
-//     location.reload();
-//   })
-//   .catch(err => console.log(err));
-// }
+const handleDelete = (id) => {
+  const isConfirmed = window.confirm("Are you sure you want to delete this data?");
+  if (isConfirmed) {
+    axios.delete('http://localhost:8081/delete/' + id)
+      .then(res => {
+        window.location.reload();
+      })
+      .catch(err => console.log(err));
+  }
+}
 
 function Home() {
   const [data, setData] = useState([]);
@@ -44,7 +47,7 @@ function Home() {
               <th> Treatment Description </th>
               <th> Medications Prescribed </th>
               <th> Cost </th>
-              {/* <th> Action </th> */}
+              <th> Action </th>
             </tr>
           </thead>
           <tbody>
@@ -56,11 +59,11 @@ function Home() {
                 <td>{patient.TreatmentDescription}</td>
                 <td>{patient.MedicationsPrescribed}</td>
                 <td>{patient.CostOfTreatment} IDR</td>
-                {/* <td>
+                <td>
                   <Link to={`/read/${patient.PatientId}`} className='btn btn-sm btn-info'>View</Link>
-                  <Link to={`/edit/${patient.PatientId}`} className='btn btn-sm btn-primary mx-2'>Edit</Link>
-                  <button onClick={() => handleDelete(patient.PatientId)} className='btn btn-sm btn-danger'>Delete</button>
-                </td> */}
+                  {/* <Link to={`/edit/${patient.PatientId}`} className='btn btn-sm btn-primary mx-2'>Edit</Link>
+                  <button onClick={() => handleDelete(patient.PatientId)} className='btn btn-sm btn-danger'>Delete</button> */}
+                </td>
               </tr>
             ))}
           </tbody>

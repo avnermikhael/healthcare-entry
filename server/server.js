@@ -50,6 +50,19 @@ app.get('/', async (req, res) => {
     }
 })
 
+app.get('/read/:id', async (req, res) => {
+    try {
+        const patientRef = db.collection("Patients").doc(req.params.id)
+        const response = await patientRef.get()
+
+        const dataWithId = { PatientId: response.id, ...response.data()}
+
+        res.send(dataWithId)
+    } catch(error) {
+        res.send(error)
+    }
+})
+
 app.post('/patient',async (req, res) => {
     try {
 
@@ -64,6 +77,34 @@ app.post('/patient',async (req, res) => {
             CostOfTreatment: req.body.cost
         }
         const response = await db.collection("Patients").doc(patientId).set(patientJson)
+        res.send(response)
+    } catch(error) {
+        res.send(error)
+    }
+})
+
+app.put('/update/:id', async (req, res) => {
+    try {
+
+        const treatmentString = req.body.treatment.join(', ')
+        const medicationString = req.body.medication.join(', ')
+        const patientRef = await db.collection("Patients").doc(req.params.id)
+        .update({
+            PatientName: req.body.PatientName,
+            DateOfTreatment: req.body.DateOfTreatment,
+            TreatmentDescription: treatmentString,
+            MedicationsPrescribed: medicationString,
+            CostOfTreatment: req.body.CostOfTreatment
+        })
+        res.send(patientRef)
+    } catch(error) {
+        res.send(error)
+    }
+})
+
+app.delete('/delete/:id', async (req, res) => {
+    try {
+        const response = await db.collection("Patients").doc(req.params.id).delete()
         res.send(response)
     } catch(error) {
         res.send(error)
