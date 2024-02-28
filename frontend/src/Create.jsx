@@ -90,7 +90,7 @@ function Create() {
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               value={formik.values.date}
-              min={new Date().toISOString().split('T')[0]}
+              // min={new Date().toISOString().split('T')[0]}
             />
           </div>
           <div className='mb-2'>

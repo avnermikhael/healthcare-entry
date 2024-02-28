@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import Pagination from 'react-bootstrap/Pagination';
+import Modal from 'react-bootstrap/Modal';
+import Button from 'react-bootstrap/Button';
 
 function formatDate(dateString) {
   const date = new Date(dateString);
@@ -14,7 +17,7 @@ function formatDate(dateString) {
 const handleDelete = (id) => {
   const isConfirmed = window.confirm("Are you sure you want to delete this data?");
   if (isConfirmed) {
-    axios.delete('http://localhost:8081/delete/' + id)
+    axios.delete(`http://localhost:8081/delete/${id}`)
       .then(res => {
         window.location.reload();
       })
@@ -24,12 +27,54 @@ const handleDelete = (id) => {
 
 function Home() {
   const [data, setData] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [sortBy, setSortBy] = useState('PatientName');
+  const [sortOrder, setSortOrder] = useState('asc');
+
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    axios.get('http://localhost:8081/')
-      .then(res => setData(res.data))
+    fetchData();
+  }, [currentPage, itemsPerPage, sortBy, sortOrder]);
+
+  const fetchData = () => {
+    axios.get(`http://localhost:8081/?page=${currentPage}&per_page=${itemsPerPage}&sort_by=${sortBy}&sort_order=${sortOrder}`)
+      .then(res => {
+        setData(res.data.patients);
+        setTotalPages(Math.ceil(res.data.total / itemsPerPage));
+      })
       .catch(err => console.log(err));
-  }, []);
+  };  
+
+  const nextPage = () => {
+    setCurrentPage(currentPage + 1);
+  };
+
+  const prevPage = () => {
+    setCurrentPage(currentPage - 1);
+  };
+
+  const handleView = (patient) => {
+    setSelectedPatient(patient);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
+  const handleSort = (key) => {
+    if (sortBy === key) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortOrder('asc');
+    }
+    setSortBy(key);
+    setCurrentPage(1);
+  };
 
   return (
     <div className='d-flex vh-100 bg-secondary justify-content-center align-items-center'>
@@ -42,11 +87,17 @@ function Home() {
           <thead>
             <tr>
               <th> Patient ID </th>
-              <th> Patient Name </th>
-              <th> Date of Treatment </th>
+              <th style={{ cursor: 'pointer' }} onClick={() => handleSort('PatientName')}>
+                <span>Patient Name</span>
+              </th>
+              <th style={{ cursor: 'pointer' }} onClick={() => handleSort('DateOfTreatment')}>
+                <span>Date of Treatment</span>
+              </th>
               <th> Treatment Description </th>
               <th> Medications Prescribed </th>
-              <th> Cost </th>
+              <th style={{ cursor: 'pointer' }} onClick={() => handleSort('CostOfTreatment')}>
+                <span>Cost</span>
+              </th>
               <th> Action </th>
             </tr>
           </thead>
@@ -60,14 +111,67 @@ function Home() {
                 <td>{patient.MedicationsPrescribed}</td>
                 <td>{patient.CostOfTreatment} IDR</td>
                 <td>
-                  <Link to={`/read/${patient.PatientId}`} className='btn btn-sm btn-info'>View</Link>
-                  {/* <Link to={`/edit/${patient.PatientId}`} className='btn btn-sm btn-primary mx-2'>Edit</Link>
-                  <button onClick={() => handleDelete(patient.PatientId)} className='btn btn-sm btn-danger'>Delete</button> */}
+                  <Button variant="info" size="sm" style={{ marginRight: '5px' }} onClick={() => handleView(patient)}>View</Button>
+                  <button onClick={() => handleDelete(patient.PatientId)} className='btn btn-sm btn-danger' >Delete</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        <div className="d-flex justify-content-center">
+          <Pagination>
+            <Pagination.Prev onClick={prevPage} disabled={currentPage === 1} />
+            {Array.from({ length: totalPages }, (_, i) => (
+              <Pagination.Item key={i + 1} active={i + 1 === currentPage} onClick={() => setCurrentPage(i + 1)}>
+                {i + 1}
+              </Pagination.Item>
+            ))}
+            <Pagination.Next onClick={nextPage} disabled={currentPage === totalPages} />
+          </Pagination>
+        </div>
+
+        <Modal show={showModal} onHide={handleCloseModal}>
+          <Modal.Header closeButton>
+            <Modal.Title>Patient Details</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {selectedPatient && (
+              <table className="table table-striped">
+                <tbody>
+                  <tr>
+                    <td><h5>Patient ID</h5></td>
+                    <td>{selectedPatient.PatientId}</td>
+                  </tr>
+                  <tr>
+                    <td><h5>Patient Name</h5></td>
+                    <td>{selectedPatient.PatientName}</td>
+                  </tr>
+                  <tr>
+                    <td><h5>Date Of Treatment</h5></td>
+                    <td>{formatDate(selectedPatient.DateOfTreatment)}</td>
+                  </tr>
+                  <tr>
+                    <td><h5>Treatment Description</h5></td>
+                    <td>{selectedPatient.TreatmentDescription}</td>
+                  </tr>
+                  <tr>
+                    <td><h5>Medications Prescribed</h5></td>
+                    <td>{selectedPatient.MedicationsPrescribed}</td>
+                  </tr>
+                  <tr>
+                    <td><h5>Treatment Cost</h5></td>
+                    <td>{selectedPatient.CostOfTreatment} IDR</td>
+                  </tr>
+                </tbody>
+              </table>
+            )}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleCloseModal}>
+              Close
+            </Button>
+          </Modal.Footer>
+        </Modal>
       </div>
     </div>
   );

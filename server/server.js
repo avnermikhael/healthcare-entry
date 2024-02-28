@@ -32,23 +32,64 @@ app.use(express.json())
 
 app.use(express.urlencoded({extended: true}))
 
+/* get all data without pagination */
+// app.get('/', async (req, res) => {
+//     try {
+//         const patientRef = db.collection("Patients").orderBy("PatientName")
+//         const response = await patientRef.get()
+
+//         let responseArr = [];
+
+//         response.forEach(doc => {
+//             const dataWithId = { PatientId: doc.id, ...doc.data() }
+//             responseArr.push(dataWithId)
+//         });
+
+//         res.send(responseArr)
+//     } catch(error) {
+//         res.send(error)
+//     }
+// })
+
+/* get all data with pagination */
 app.get('/', async (req, res) => {
     try {
-        const patientRef = db.collection("Patients").orderBy("PatientName")
-        const response = await patientRef.get()
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const sortBy = req.query.sort_by || 'PatientName';
+        const sortOrder = req.query.sort_order || 'asc';
+        
+        console.log(req.query);
 
-        let responseArr = [];
+        const startAt = (page - 1) * limit;
+
+        let patientRef = db.collection("Patients");
+
+        patientRef = patientRef.orderBy(sortBy, sortOrder);
+
+        patientRef = patientRef.limit(limit).offset(startAt);
+
+        const response = await patientRef.get();
+
+        const totalPatients = await db.collection("Patients").get();
+        const total = totalPatients.docs.length;
+
+        const totalPages = Math.ceil(total / limit);
+
+        const responseArr = [];
 
         response.forEach(doc => {
-            const dataWithId = { PatientId: doc.id, ...doc.data() }
-            responseArr.push(dataWithId)
+            const dataWithId = { PatientId: doc.id, ...doc.data() };
+            responseArr.push(dataWithId);
         });
 
-        res.send(responseArr)
+        res.json({ patients: responseArr, total, totalPages });
     } catch(error) {
-        res.send(error)
+        res.status(500).json({ error: error.message });
     }
-})
+});
+
+
 
 app.get('/read/:id', async (req, res) => {
     try {
