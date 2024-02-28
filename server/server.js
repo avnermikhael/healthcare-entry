@@ -54,38 +54,36 @@ app.use(express.urlencoded({extended: true}))
 /* get all data with pagination */
 app.get('/', async (req, res) => {
     try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const sortBy = req.query.sort_by || 'PatientName';
-        const sortOrder = req.query.sort_order || 'asc';
-        
-        console.log(req.query);
+        const page = parseInt(req.query.page) || 1
+        const limit = parseInt(req.query.limit) || 10
+        const sortBy = req.query.sort_by || 'PatientName'
+        const sortOrder = req.query.sort_order || 'asc'
 
         const startAt = (page - 1) * limit;
 
-        let patientRef = db.collection("Patients");
+        let patientRef = db.collection("Patients")
 
-        patientRef = patientRef.orderBy(sortBy, sortOrder);
+        patientRef = patientRef.orderBy(sortBy, sortOrder)
 
-        patientRef = patientRef.limit(limit).offset(startAt);
+        patientRef = patientRef.limit(limit).offset(startAt)
 
-        const response = await patientRef.get();
+        const response = await patientRef.get()
 
-        const totalPatients = await db.collection("Patients").get();
-        const total = totalPatients.docs.length;
+        const totalPatients = await db.collection("Patients").get()
+        const total = totalPatients.docs.length
 
-        const totalPages = Math.ceil(total / limit);
+        const totalPages = Math.ceil(total / limit)
 
-        const responseArr = [];
+        const responseArr = []
 
         response.forEach(doc => {
-            const dataWithId = { PatientId: doc.id, ...doc.data() };
-            responseArr.push(dataWithId);
+            const dataWithId = { PatientId: doc.id, ...doc.data() }
+            responseArr.push(dataWithId)
         });
 
-        res.json({ patients: responseArr, total, totalPages });
+        res.json({ patients: responseArr, total, totalPages })
     } catch(error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error.message })
     }
 });
 
